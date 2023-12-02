@@ -30,3 +30,6 @@ uninstall: clean
 
 example: $(LIB_DIR)/Example.o
 	$(CC) $< -o $(LIB_DIR)/Example -lMPU6050 -pthread
+
+offsets: $(LIB_DIR)/GetOffsets.o
+	$(CC) $< -o $(LIB_DIR)/Offsets -lMPU6050 -pthread

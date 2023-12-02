@@ -47,6 +47,8 @@ MPU6050::MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread) {
 
 MPU6050::MPU6050(int8_t addr) : MPU6050(addr, 7, true){}
 
+MPU6050::MPU6050() : MPU6050(0x68, 7, true){}
+
 void MPU6050::getGyroRaw(float *roll, float *pitch, float *yaw) {
 	int16_t X = i2c_smbus_read_byte_data(f_dev, 0x43) << 8 | i2c_smbus_read_byte_data(f_dev, 0x44); //Read X registers
 	int16_t Y = i2c_smbus_read_byte_data(f_dev, 0x45) << 8 | i2c_smbus_read_byte_data(f_dev, 0x46); //Read Y registers
@@ -79,6 +81,12 @@ void MPU6050::getAccel(float *x, float *y, float *z) {
 	*z = round((*z - A_OFF_Z) * 1000.0 / ACCEL_SENS) / 1000.0;
 }
 
+void MPU6050::getIMU(float *ax, float *ay, float *az, float *gr, float *gp, float *gy, long long *timestamp) {
+	getGyro(gr, gp, gy); //Get the gyroscope values
+	getAccel(ax, ay, az); //Get the accelerometer values
+	*timestamp = chrono::time_point_cast<chrono::nanoseconds>(chrono::system_clock::now()).time_since_epoch().count(); //Get the current time
+}
+
 void MPU6050::getOffsets(float *ax_off, float *ay_off, float *az_off, float *gr_off, float *gp_off, float *gy_off) {
 	float gyro_off[3]; //Temporary storage
 	float accel_off[3];
@@ -97,7 +105,7 @@ void MPU6050::getOffsets(float *ax_off, float *ay_off, float *az_off, float *gr_
 	*gr_off = *gr_off / 10000, *gp_off = *gp_off / 10000, *gy_off = *gy_off / 10000; //Divide by number of loops (to average)
 	*ax_off = *ax_off / 10000, *ay_off = *ay_off / 10000, *az_off = *az_off / 10000;
 
-	*az_off = *az_off - ACCEL_SENS; //Remove 1g from the value calculated to compensate for gravity)
+	*ax_off = *ax_off - ACCEL_SENS; //Remove 1g from the value calculated to compensate for gravity)
 }
 
 int MPU6050::getAngle(int axis, float *result) {
