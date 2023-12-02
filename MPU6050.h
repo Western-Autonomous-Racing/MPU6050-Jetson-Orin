@@ -25,13 +25,13 @@
 
 //Offsets - supply your own here (calculate offsets with getOffsets function)
 //     Accelerometer
-#define A_OFF_X 0
-#define A_OFF_Y 0
-#define A_OFF_Z 0
+#define A_OFF_X 19402
+#define A_OFF_Y -2692
+#define A_OFF_Z -8625
 //    Gyroscope
-#define G_OFF_X 0
-#define G_OFF_Y 0
-#define G_OFF_Z 0
+#define G_OFF_X -733
+#define G_OFF_Y 433
+#define G_OFF_Z -75
 
 //-----------------------END MODIFY THESE PARAMETERS-----------------------
 
@@ -108,7 +108,7 @@ class MPU6050 {
 		bool _first_run = 1; //Variable for whether to set gyro angle to acceleration angle in compFilter
 	public:
 		MPU6050(int8_t addr);
-		MPU6050(int8_t addr, bool run_update_thread);
+		MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread);
 		void getAccelRaw(float *x, float *y, float *z);
 		void getGyroRaw(float *roll, float *pitch, float *yaw);
 		void getAccel(float *x, float *y, float *z);
