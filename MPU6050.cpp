@@ -1,11 +1,13 @@
 //-------------------------------MPU6050 Accelerometer and Gyroscope C++ library-----------------------------
-//Copyright (c) 2019, Alex Mous
 //Licensed under the CC BY-NC SA 4.0
 
 //Include the header file for this class
+
 #include "MPU6050.h"
 
-MPU6050::MPU6050(int8_t addr, bool run_update_thread) {
+using namespace std;
+
+MPU6050::MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread) {
 	int status;
 
 	MPU6050_addr = addr;
@@ -13,14 +15,16 @@ MPU6050::MPU6050(int8_t addr, bool run_update_thread) {
 	_first_run = 1; //Variable for whether to set gyro angle to acceleration angle in compFilter
 	calc_yaw = false;
 
-	f_dev = open("/dev/i2c-7", O_RDWR); //Open the I2C device file
+	string i2c_bus = "/dev/i2c-" + to_string(bus_num);
+
+	f_dev = open(i2c_bus.c_str(), O_RDWR); //Open the I2C device file
 	if (f_dev < 0) { //Catch errors
-		std::cout << "ERR (MPU6050.cpp:MPU6050()): Failed to open /dev/i2c-1. Please check that I2C is enabled with raspi-config\n"; //Print error message
+		cout << "ERR (MPU6050.cpp:MPU6050()): Failed to open /dev/i2c-1. Please check that I2C is enabled with raspi-config\n"; //Print error message
 	}
 
 	status = ioctl(f_dev, I2C_SLAVE, MPU6050_addr); //Set the I2C bus to use the correct address
 	if (status < 0) {
-		std::cout << "ERR (MPU6050.cpp:MPU6050()): Could not get I2C bus with " << addr << " address. Please confirm that this address is correct\n"; //Print error message
+		cout << "ERR (MPU6050.cpp:MPU6050()): Could not get I2C bus with " << addr << " address. Please confirm that this address is correct\n"; //Print error message
 	}
 
 	i2c_smbus_write_byte_data(f_dev, 0x6b, 0b00000000); //Take MPU6050 out of sleep mode - see Register Map
@@ -37,7 +41,7 @@ MPU6050::MPU6050(int8_t addr, bool run_update_thread) {
 	i2c_smbus_write_byte_data(f_dev, 0x06, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x07, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x08, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x09, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x0A, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x0B, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x00, 0b10000001), i2c_smbus_write_byte_data(f_dev, 0x01, 0b00000001), i2c_smbus_write_byte_data(f_dev, 0x02, 0b10000001);
 
 	if (run_update_thread){
-		std::thread(&MPU6050::_update, this).detach(); //Create a seperate thread, for the update routine to run in the background, and detach it, allowing the program to continue
+		thread(&MPU6050::_update, this).detach(); //Create a seperate thread, for the update routine to run in the background, and detach it, allowing the program to continue
 	}
 }
 
@@ -102,7 +106,7 @@ int MPU6050::getAngle(int axis, float *result) {
 		return 0;
 	}
 	else {
-		std::cout << "ERR (MPU6050.cpp:getAngle()): 'axis' must be between 0 and 2 (for roll, pitch or yaw)\n"; //Print error message
+		cout << "ERR (MPU6050.cpp:getAngle()): 'axis' must be between 0 and 2 (for roll, pitch or yaw)\n"; //Print error message
 		*result = 0; //Set result to zero
 		return 1;
 	}
