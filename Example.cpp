@@ -5,41 +5,44 @@
 //Example code
 
 #include <MPU6050.h>
+#include <iostream>
+#include <chrono>
+#include <thread>
 
 MPU6050 device(0x68);
 
 int main() {
-	float ax, ay, az, gr, gp, gy; //Variables to store the accel, gyro and angle values
+	float ax, ay, az, gr, gp, gy; // Variables to store the accel, gyro, and angle values
 
-	sleep(1); //Wait for the MPU6050 to stabilize
+	sleep(1); // Wait for the MPU6050 to stabilize
 
-/*
-	//Calculate the offsets
-	std::cout << "Calculating the offsets...\n    Please keep the accelerometer level and still\n    This could take a couple of minutes...";
-	device.getOffsets(&ax, &ay, &az, &gr, &gp, &gy);
-	std::cout << "Gyroscope R,P,Y: " << gr << "," << gp << "," << gy << "\nAccelerometer X,Y,Z: " << ax << "," << ay << "," << az << "\n";
-*/
+	auto start = std::chrono::steady_clock::now();
+	auto end = start + std::chrono::seconds(10); // Run for 10 seconds
 
-	//Read the current yaw angle
-	device.calc_yaw = true;
+	double sum = 0.0;
+	double count = 1.0;
 
-	for (int i = 0; i < 40; i++) {
-		device.getAngle(0, &gr);
-		device.getAngle(1, &gp);
-		device.getAngle(2, &gy);
-		std::cout << "Current angle around the roll axis: " << gr << "\n";
-		std::cout << "Current angle around the pitch axis: " << gp << "\n";
-		std::cout << "Current angle around the yaw axis: " << gy << "\n";
-		usleep(250000); //0.25sec
+	while (std::chrono::steady_clock::now() < end) {
+		// Get the current accelerometer values
+
+		auto start_interval = std::chrono::steady_clock::now();
+
+		device.getAccel(&ax, &ay, &az);
+		std::cout << "Accelerometer Readings: X: " << ax << ", Y: " << ay << ", Z: " << az << "\n";
+
+		// Get the current gyroscope values
+		device.getGyro(&gr, &gp, &gy);
+		std::cout << "Gyroscope Readings: X: " << gr << ", Y: " << gp << ", Z: " << gy << "\n";
+
+		// usleep(25000); // 0.025sec
+		// std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Sleep for 25 milliseconds
+
+		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_interval);
+		count++;
+		sum += ax;
 	}
 
-	//Get the current accelerometer values
-	device.getAccel(&ax, &ay, &az);
-	std::cout << "Accelerometer Readings: X: " << ax << ", Y: " << ay << ", Z: " << az << "\n";
-
-	//Get the current gyroscope values
-	device.getGyro(&gr, &gp, &gy);
-	std::cout << "Gyroscope Readings: X: " << gr << ", Y: " << gp << ", Z: " << gy << "\n";
+	std::cout << "Average ay: " << sum / count << "\n";
 
 	return 0;
 }
