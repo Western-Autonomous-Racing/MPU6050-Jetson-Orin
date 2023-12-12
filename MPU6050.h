@@ -25,13 +25,13 @@
 
 //Offsets - supply your own here (calculate offsets with getOffsets function)
 //     Accelerometer
-#define A_OFF_X 19402
-#define A_OFF_Y -2692
-#define A_OFF_Z -8625
+#define A_OFF_X 0
+#define A_OFF_Y 0
+#define A_OFF_Z 0
 //    Gyroscope
-#define G_OFF_X -733
-#define G_OFF_Y 433
-#define G_OFF_Z -75
+#define G_OFF_X 0
+#define G_OFF_Y 0
+#define G_OFF_Z 0
 
 //-----------------------END MODIFY THESE PARAMETERS-----------------------
 
@@ -52,6 +52,7 @@ extern "C" {
 
 #define TAU 0.05 //Complementary filter percentage
 #define RAD_T_DEG 57.29577951308 //Radians to degrees (180/PI)
+#define STANDARD_GRAVITY 9.80665 //Standard gravity constant (m/s^2)
 
 //Select the appropriate settings
 #if GYRO_RANGE == 1
@@ -110,11 +111,13 @@ class MPU6050 {
 		MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread);
 		MPU6050(int8_t addr);
 		MPU6050();
+		void getTempRaw(float *temp);
 		void getAccelRaw(float *x, float *y, float *z);
 		void getGyroRaw(float *roll, float *pitch, float *yaw);
+		void getTemp(float *temp);
 		void getAccel(float *x, float *y, float *z);
 		void getGyro(float *roll, float *pitch, float *yaw);
-		void getIMU(float *ax, float *ay, float *az, float *gr, float *gp, float *gy, long long *timestamp);
+		void getIMU(float *ax, float *ay, float *az, float *gr, float *gp, float *gy, float *temp, long long *timestamp);
 		void getOffsets(float *ax_off, float *ay_off, float *az_off, float *gr_off, float *gp_off, float *gy_off);
 		int getAngle(int axis, float *result);
 		bool calc_yaw;

@@ -49,6 +49,16 @@ MPU6050::MPU6050(int8_t addr) : MPU6050(addr, 7, true){}
 
 MPU6050::MPU6050() : MPU6050(0x68, 7, true){}
 
+void MPU6050::getTempRaw(float *temp) {
+	int16_t T = i2c_smbus_read_byte_data(f_dev, 0x41) << 8 | i2c_smbus_read_byte_data(f_dev, 0x42); //Read temperature registers
+	*temp = (float)T; //Store in variable
+}
+
+void MPU6050::getTemp(float *temp) {
+	getTempRaw(temp); //Store raw value into variable
+	*temp = round(*temp / 340.0) + 36.53; //Convert to degrees C (use 1000 and round() to round the value to three decimal places)
+}
+
 void MPU6050::getGyroRaw(float *roll, float *pitch, float *yaw) {
 	int16_t X = i2c_smbus_read_byte_data(f_dev, 0x43) << 8 | i2c_smbus_read_byte_data(f_dev, 0x44); //Read X registers
 	int16_t Y = i2c_smbus_read_byte_data(f_dev, 0x45) << 8 | i2c_smbus_read_byte_data(f_dev, 0x46); //Read Y registers
@@ -76,14 +86,15 @@ void MPU6050::getAccelRaw(float *x, float *y, float *z) {
 
 void MPU6050::getAccel(float *x, float *y, float *z) {
 	getAccelRaw(x, y, z); //Store raw values into variables
-	*x = round((*x - A_OFF_X) * 1000.0 / ACCEL_SENS) / 1000.0; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
-	*y = round((*y - A_OFF_Y) * 1000.0 / ACCEL_SENS) / 1000.0;
-	*z = round((*z - A_OFF_Z) * 1000.0 / ACCEL_SENS) / 1000.0;
+	*x = round((*x - A_OFF_X) * 1000.0 / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
+	*y = round((*y - A_OFF_Y) * 1000.0 / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY;
+	*z = round((*z - A_OFF_Z) * 1000.0 / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY;
 }
 
-void MPU6050::getIMU(float *ax, float *ay, float *az, float *gr, float *gp, float *gy, long long *timestamp) {
+void MPU6050::getIMU(float *ax, float *ay, float *az, float *gr, float *gp, float *gy, float *temp, long long *timestamp) {
 	getGyro(gr, gp, gy); //Get the gyroscope values
 	getAccel(ax, ay, az); //Get the accelerometer values
+	getTemp(temp); //Get the temperature
 	*timestamp = chrono::time_point_cast<chrono::nanoseconds>(chrono::system_clock::now()).time_since_epoch().count(); //Get the current time
 }
 
