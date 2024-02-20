@@ -4,6 +4,8 @@
 //Include the header file for this class
 
 #include "MPU6050.h"
+#include <cmath>
+#include <bitset>
 
 using namespace std;
 
@@ -19,7 +21,7 @@ MPU6050::MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread) {
 
 	f_dev = open(i2c_bus.c_str(), O_RDWR); //Open the I2C device file
 	if (f_dev < 0) { //Catch errors
-		cout << "ERR (MPU6050.cpp:MPU6050()): Failed to open /dev/i2c-7. Please check that I2C is enabled with raspi-config\n"; //Print error message
+		cout << "ERR (MPU6050.cpp:MPU6050()): Failed to open /dev/i2c-7. Please check that I2C is enabled\n"; //Print error message
 	}
 
 	status = ioctl(f_dev, I2C_SLAVE, MPU6050_addr); //Set the I2C bus to use the correct address
@@ -70,9 +72,9 @@ void MPU6050::getGyroRaw(float *roll, float *pitch, float *yaw) {
 
 void MPU6050::getGyro(float *roll, float *pitch, float *yaw) {
 	getGyroRaw(roll, pitch, yaw); //Store raw values into variables
-	*roll = round((*roll - G_OFF_X) * 1000.0 / GYRO_SENS) / 1000.0; //Remove the offset and divide by the gyroscope sensetivity (use 1000 and round() to round the value to three decimal places)
-	*pitch = round((*pitch - G_OFF_Y) * 1000.0 / GYRO_SENS) / 1000.0;
-	*yaw = round((*yaw - G_OFF_Z) * 1000.0 / GYRO_SENS) / 1000.0;
+	*roll = round((*roll - G_OFF_X) * 1000.0 / GYRO_SENS) / 1000.0 * (M_PI / 180.0); // Convert to radians per second
+	*pitch = round((*pitch - G_OFF_Y) * 1000.0 / GYRO_SENS) / 1000.0 * (M_PI / 180.0);
+	*yaw = round((*yaw - G_OFF_Z) * 1000.0 / GYRO_SENS) / 1000.0 * (M_PI / 180.0);
 }
 
 void MPU6050::getAccelRaw(float *x, float *y, float *z) {
