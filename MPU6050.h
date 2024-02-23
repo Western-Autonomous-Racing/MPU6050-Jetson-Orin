@@ -25,28 +25,28 @@
 
 //Offsets - supply your own here (calculate offsets with getOffsets function)
 //     Accelerometer
-#define A_OFF_X 5358 // 3085
-#define A_OFF_Y 32767 // 19613
-#define A_OFF_Z 10618 // 6371
+#define A_OFF_X 0 // 5358 // 3085
+#define A_OFF_Y 0 // 32767 // 19613
+#define A_OFF_Z 0 // 10618 // 6371
 //    Gyroscope
-#define G_OFF_X -280 // -2159
-#define G_OFF_Y -348 // -2364
-#define G_OFF_Z 182 // 1385
+#define G_OFF_X 0 // -280 // -2159
+#define G_OFF_Y 0 // -348 // -2364
+#define G_OFF_Z 0 // 182 // 1385
 
 //-----------------------END MODIFY THESE PARAMETERS-----------------------
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <time.h>
-extern "C" {
-	#include <linux/i2c-dev.h>
-	#include <i2c/smbus.h>
-}
+#include <linux/i2c-dev.h>
 #include <cmath>
 #include <thread>
+#include <vector>
 
 #define _POSIX_C_SOURCE 200809L //Used for calculating time
 
@@ -96,6 +96,7 @@ class MPU6050 {
 		float _accel_angle[3];
 		float _gyro_angle[3];
 		float _angle[3]; //Store all angles (accel roll, accel pitch, accel yaw, gyro roll, gyro pitch, gyro yaw, comb roll, comb pitch comb yaw)
+		char config[2];
 
 		float ax, ay, az, gr, gp, gy; //Temporary storage variables used in _update()
 

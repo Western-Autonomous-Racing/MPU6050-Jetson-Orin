@@ -4,8 +4,6 @@
 //Include the header file for this class
 
 #include "MPU6050.h"
-#include <cmath>
-#include <bitset>
 
 using namespace std;
 
@@ -29,18 +27,20 @@ MPU6050::MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread) {
 		cout << "ERR (MPU6050.cpp:MPU6050()): Could not get I2C bus with " << addr << " address. Please confirm that this address is correct\n"; //Print error message
 	}
 
-	i2c_smbus_write_byte_data(f_dev, 0x6b, 0b00000000); //Take MPU6050 out of sleep mode - see Register Map
+	config[0] = 0x6B; // PWR_MGMT_1 register
+    config[1] = 0x00; // Wake up device
+	write(f_dev, config, 2); //Take MPU6050 out of sleep mode - see Register Map
 
-	i2c_smbus_write_byte_data(f_dev, 0x1a, 0b00000011); //Set DLPF (low pass filter) to 44Hz (so no noise above 44Hz will pass through)
+	// i2c_smbus_write_byte_data(f_dev, 0x1a, 0b00000011); //Set DLPF (low pass filter) to 44Hz (so no noise above 44Hz will pass through)
 
-	i2c_smbus_write_byte_data(f_dev, 0x19, 0b00000100); //Set sample rate divider (to 200Hz) - see Register Map
+	// i2c_smbus_write_byte_data(f_dev, 0x19, 0b00000100); //Set sample rate divider (to 200Hz) - see Register Map
 
-	i2c_smbus_write_byte_data(f_dev, 0x1b, GYRO_CONFIG); //Configure gyroscope settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
+	// i2c_smbus_write_byte_data(f_dev, 0x1b, GYRO_CONFIG); //Configure gyroscope settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
 
-	i2c_smbus_write_byte_data(f_dev, 0x1c, ACCEL_CONFIG); //Configure accelerometer settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
+	// i2c_smbus_write_byte_data(f_dev, 0x1c, ACCEL_CONFIG); //Configure accelerometer settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
 
-	//Set offsets to zero
-	i2c_smbus_write_byte_data(f_dev, 0x06, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x07, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x08, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x09, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x0A, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x0B, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x00, 0b10000001), i2c_smbus_write_byte_data(f_dev, 0x01, 0b00000001), i2c_smbus_write_byte_data(f_dev, 0x02, 0b10000001);
+	// //Set offsets to zero
+	// i2c_smbus_write_byte_data(f_dev, 0x06, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x07, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x08, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x09, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x0A, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x0B, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x00, 0b10000001), i2c_smbus_write_byte_data(f_dev, 0x01, 0b00000001), i2c_smbus_write_byte_data(f_dev, 0x02, 0b10000001);
 
 	if (run_update_thread){
 		thread(&MPU6050::_update, this).detach(); //Create a seperate thread, for the update routine to run in the background, and detach it, allowing the program to continue
@@ -52,7 +52,16 @@ MPU6050::MPU6050(int8_t addr) : MPU6050(addr, 7, true){}
 MPU6050::MPU6050() : MPU6050(0x68, 7, true){}
 
 void MPU6050::getTempRaw(float *temp) {
-	int16_t T = i2c_smbus_read_byte_data(f_dev, 0x41) << 8 | i2c_smbus_read_byte_data(f_dev, 0x42); //Read temperature registers
+	// write(f_dev, config, 2);
+	char reg[1] = {0x41};
+	write(f_dev, reg, 1); //Set the register to read from
+
+	char data[2] = {0};
+	if (read(f_dev, data, 2) != 2) {
+		cout << "ERR (MPU6050.cpp:getTempRaw()): Failed to read from the I2C bus\n"; //Print error message
+	}
+
+	int16_t T = data[0] << 8 | data[1]; //Read temperature registers
 	*temp = (float)T; //Store in variable
 }
 
@@ -62,9 +71,18 @@ void MPU6050::getTemp(float *temp) {
 }
 
 void MPU6050::getGyroRaw(float *roll, float *pitch, float *yaw) {
-	int16_t X = i2c_smbus_read_byte_data(f_dev, 0x43) << 8 | i2c_smbus_read_byte_data(f_dev, 0x44); //Read X registers
-	int16_t Y = i2c_smbus_read_byte_data(f_dev, 0x45) << 8 | i2c_smbus_read_byte_data(f_dev, 0x46); //Read Y registers
-	int16_t Z = i2c_smbus_read_byte_data(f_dev, 0x47) << 8 | i2c_smbus_read_byte_data(f_dev, 0x48); //Read Z registers
+	// write(f_dev, config, 2);
+	char reg[1] = {0x43};
+	write(f_dev, reg, 1); //Set the register to read from
+
+	char data[6] = {0};
+	if (read(f_dev, data, 6) != 6) {
+		cout << "ERR (MPU6050.cpp:getGyroRaw()): Failed to read from the I2C bus\n"; //Print error message
+	}
+
+	int16_t X = (data[0] << 8) | data[1]; //Read X registers
+	int16_t Y = (data[2] << 8) | data[3]; //Read Y registers
+	int16_t Z = (data[4] << 8) | data[5]; //Read Z registers
 	*roll = (float)X; //Roll on X axis
 	*pitch = (float)Y; //Pitch on Y axis
 	*yaw = (float)Z; //Yaw on Z axis
@@ -78,9 +96,18 @@ void MPU6050::getGyro(float *roll, float *pitch, float *yaw) {
 }
 
 void MPU6050::getAccelRaw(float *x, float *y, float *z) {
-	int16_t X = i2c_smbus_read_byte_data(f_dev, 0x3b) << 8 | i2c_smbus_read_byte_data(f_dev, 0x3c); //Read X registers
-	int16_t Y = i2c_smbus_read_byte_data(f_dev, 0x3d) << 8 | i2c_smbus_read_byte_data(f_dev, 0x3e); //Read Y registers
-	int16_t Z = i2c_smbus_read_byte_data(f_dev, 0x3f) << 8 | i2c_smbus_read_byte_data(f_dev, 0x40); //Read Z registers
+	// write(f_dev, config, 2);
+	char reg[1] = {0x3B};
+	write(f_dev, reg, 1); //Set the register to read from
+
+	char data[6] = {0};
+	if (read(f_dev, data, 6) != 6) {
+		cout << "ERR (MPU6050.cpp:getAccelRaw()): Failed to read from the I2C bus\n"; //Print error message
+	}
+
+	int16_t X = (data[0] << 8) | data[1]; //Read X registers
+	int16_t Y = (data[2] << 8) | data[3]; //Read Y registers
+	int16_t Z = (data[4] << 8) | data[5]; //Read Z registers
 	*x = (float)X;
 	*y = (float)Y;
 	*z = (float)Z;
@@ -88,9 +115,9 @@ void MPU6050::getAccelRaw(float *x, float *y, float *z) {
 
 void MPU6050::getAccel(float *x, float *y, float *z) {
 	getAccelRaw(x, y, z); //Store raw values into variables
-	*x = round((*x - A_OFF_X) * 1000.0 / ACCEL_SENS) / 1000.0; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
-	*y = round((*y - A_OFF_Y) * 1000.0 / ACCEL_SENS) / 1000.0;
-	*z = round((*z - A_OFF_Z) * 1000.0 / ACCEL_SENS) / 1000.0;
+	*x = round(((*x - A_OFF_X) * 1000.0) / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
+	*y = round(((*y - A_OFF_Y) * 1000.0) / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY;
+	*z = round(((*z - A_OFF_Z) * 1000.0) / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY;
 }
 
 void MPU6050::getIMU(float *ax, float *ay, float *az, float *gr, float *gp, float *gy, float *temp, long long *timestamp) {
@@ -137,6 +164,7 @@ void MPU6050::_update() { //Main update function - runs continuously
 	clock_gettime(CLOCK_REALTIME, &start); //Read current time into start variable
 
 	while (1) { //Loop forever
+		write(f_dev, config, 2);
 		getGyro(&gr, &gp, &gy); //Get the data from the sensors
 		getAccel(&ax, &ay, &az);
 
