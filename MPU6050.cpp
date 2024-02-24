@@ -4,6 +4,7 @@
 //Include the header file for this class
 
 #include "MPU6050.h"
+#include <chrono>
 
 using namespace std;
 
@@ -31,121 +32,118 @@ MPU6050::MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread) {
     config[1] = 0x00; // Wake up device
 	write(f_dev, config, 2); //Take MPU6050 out of sleep mode - see Register Map
 
-	// i2c_smbus_write_byte_data(f_dev, 0x1a, 0b00000011); //Set DLPF (low pass filter) to 44Hz (so no noise above 44Hz will pass through)
+	// char data[2];
 
-	// i2c_smbus_write_byte_data(f_dev, 0x19, 0b00000100); //Set sample rate divider (to 200Hz) - see Register Map
+	// data[0] = 0x1a;
+	// data[1] = 0b00000011;
+	// write(f_dev, data, 2); // Set DLPF (low pass filter) to 44Hz (so no noise above 44Hz will pass through)
 
-	// i2c_smbus_write_byte_data(f_dev, 0x1b, GYRO_CONFIG); //Configure gyroscope settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
+	// data[0] = 0x19;
+	// data[1] = 0b00000100;
+	// write(f_dev, data, 2); // Set sample rate divider (to 200Hz) - see Register Map
 
-	// i2c_smbus_write_byte_data(f_dev, 0x1c, ACCEL_CONFIG); //Configure accelerometer settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
+	// data[0] = 0x1b;
+	// data[1] = GYRO_CONFIG;
+	// write(f_dev, data, 2); // Configure gyroscope settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
 
-	// //Set offsets to zero
-	// i2c_smbus_write_byte_data(f_dev, 0x06, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x07, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x08, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x09, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x0A, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x0B, 0b00000000), i2c_smbus_write_byte_data(f_dev, 0x00, 0b10000001), i2c_smbus_write_byte_data(f_dev, 0x01, 0b00000001), i2c_smbus_write_byte_data(f_dev, 0x02, 0b10000001);
+	// data[0] = 0x1c;
+	// data[1] = ACCEL_CONFIG;
+	// write(f_dev, data, 2); // Configure accelerometer settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
 
-	if (run_update_thread){
-		thread(&MPU6050::_update, this).detach(); //Create a seperate thread, for the update routine to run in the background, and detach it, allowing the program to continue
-	}
+	// // //Set offsets to zero
+	// data[0] = 0x06;
+	// data[1] = 0b00000000;
+	// write(f_dev, data, 2);
+
+	// data[0] = 0x07;
+	// data[1] = 0b00000000;
+	// write(f_dev, data, 2);
+
+	// data[0] = 0x08;
+	// data[1] = 0b00000000;
+	// write(f_dev, data, 2);
+
+	// data[0] = 0x09;
+	// data[1] = 0b00000000;
+	// write(f_dev, data, 2);
+
+	// data[0] = 0x0A;
+	// data[1] = 0b00000000;
+	// write(f_dev, data, 2);
+
+	// data[0] = 0x0B;
+	// data[1] = 0b00000000;
+	// write(f_dev, data, 2);
+
+	// data[0] = 0x00;
+	// data[1] = 0b10000001;
+	// write(f_dev, data, 2);
+
+	// data[0] = 0x01;
+	// data[1] = 0b00000001;
+	// write(f_dev, data, 2);
+
+	// data[0] = 0x02;
+	// data[1] = 0b10000001;
+	// write(f_dev, data, 2);
+
+	// if (run_update_thread){
+	// 	thread(&MPU6050::_update, this).detach(); //Create a seperate thread, for the update routine to run in the background, and detach it, allowing the program to continue
+	// }
+
+	cout << "MPU6050 initialized" << endl; //Print message
 }
 
 MPU6050::MPU6050(int8_t addr) : MPU6050(addr, 7, true){}
 
 MPU6050::MPU6050() : MPU6050(0x68, 7, true){}
 
-void MPU6050::getTempRaw(float *temp) {
-	// write(f_dev, config, 2);
-	char reg[1] = {0x41};
-	write(f_dev, reg, 1); //Set the register to read from
-
-	char data[2] = {0};
-	if (read(f_dev, data, 2) != 2) {
-		cout << "ERR (MPU6050.cpp:getTempRaw()): Failed to read from the I2C bus\n"; //Print error message
-	}
-
-	int16_t T = data[0] << 8 | data[1]; //Read temperature registers
-	*temp = (float)T; //Store in variable
-}
-
-void MPU6050::getTemp(float *temp) {
-	getTempRaw(temp); //Store raw value into variable
-	*temp = round(*temp / 340.0) + 36.53; //Convert to degrees C (use 1000 and round() to round the value to three decimal places)
-}
-
-void MPU6050::getGyroRaw(float *roll, float *pitch, float *yaw) {
-	// write(f_dev, config, 2);
-	char reg[1] = {0x43};
-	write(f_dev, reg, 1); //Set the register to read from
-
-	char data[6] = {0};
-	if (read(f_dev, data, 6) != 6) {
-		cout << "ERR (MPU6050.cpp:getGyroRaw()): Failed to read from the I2C bus\n"; //Print error message
-	}
-
-	int16_t X = (data[0] << 8) | data[1]; //Read X registers
-	int16_t Y = (data[2] << 8) | data[3]; //Read Y registers
-	int16_t Z = (data[4] << 8) | data[5]; //Read Z registers
-	*roll = (float)X; //Roll on X axis
-	*pitch = (float)Y; //Pitch on Y axis
-	*yaw = (float)Z; //Yaw on Z axis
-}
-
-void MPU6050::getGyro(float *roll, float *pitch, float *yaw) {
-	getGyroRaw(roll, pitch, yaw); //Store raw values into variables
-	*roll = round((*roll - G_OFF_X) * 1000.0 / GYRO_SENS) / 1000.0 * (M_PI / 180.0); // Convert to radians per second
-	*pitch = round((*pitch - G_OFF_Y) * 1000.0 / GYRO_SENS) / 1000.0 * (M_PI / 180.0);
-	*yaw = round((*yaw - G_OFF_Z) * 1000.0 / GYRO_SENS) / 1000.0 * (M_PI / 180.0);
-}
-
-void MPU6050::getAccelRaw(float *x, float *y, float *z) {
-	// write(f_dev, config, 2);
+void MPU6050::getSensorRaw(float *x, float *y, float *z, float *roll, float *pitch, float *yaw, float *temp) {
+	write(f_dev, config, 2);
 	char reg[1] = {0x3B};
 	write(f_dev, reg, 1); //Set the register to read from
 
-	char data[6] = {0};
-	if (read(f_dev, data, 6) != 6) {
-		cout << "ERR (MPU6050.cpp:getAccelRaw()): Failed to read from the I2C bus\n"; //Print error message
-	}
+	char data[14] = {0};
+	if (read(f_dev, data, 14) != 14) {
+		cout << "ERR (MPU6050.cpp:getSensorRaw()): Failed to read from the I2C bus\n"; //Print error message
+	}	
 
-	int16_t X = (data[0] << 8) | data[1]; //Read X registers
-	int16_t Y = (data[2] << 8) | data[3]; //Read Y registers
-	int16_t Z = (data[4] << 8) | data[5]; //Read Z registers
-	*x = (float)X;
-	*y = (float)Y;
-	*z = (float)Z;
-}
+	// raw acceleration
+	int16_t aX = (data[0] << 8) | data[1]; //Read X registers
+	int16_t aY = (data[2] << 8) | data[3]; //Read Y registers
+	int16_t aZ = (data[4] << 8) | data[5]; //Read Z registers
+	*x = (float)aX;
+	*y = (float)aY;
+	*z = (float)aZ;
 
-void MPU6050::getAccel(float *x, float *y, float *z) {
-	getAccelRaw(x, y, z); //Store raw values into variables
-	*x = round(((*x - A_OFF_X) * 1000.0) / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
-	*y = round(((*y - A_OFF_Y) * 1000.0) / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY;
-	*z = round(((*z - A_OFF_Z) * 1000.0) / ACCEL_SENS) / 1000.0 * STANDARD_GRAVITY;
+	// raw temperature
+	int16_t T = data[6] << 8 | data[7]; //Read temperature registers
+	*temp = (float)T; //Store in variable
+
+	// raw gyroscope
+	int16_t gX = (data[8] << 8) | data[9]; //Read X registers
+	int16_t gY = (data[10] << 8) | data[11]; //Read Y registers
+	int16_t gZ = (data[12] << 8) | data[13]; //Read Z registers
+	*roll = (float)gX; //Roll on X axis
+	*pitch = (float)gY; //Pitch on Y axis
+	*yaw = (float)gZ; //Yaw on Z axis	
 }
 
 void MPU6050::getIMU(float *ax, float *ay, float *az, float *gr, float *gp, float *gy, float *temp, long long *timestamp) {
-	getGyro(gr, gp, gy); //Get the gyroscope values
-	getAccel(ax, ay, az); //Get the accelerometer values
-	getTemp(temp); //Get the temperature
+	write(f_dev, config, 2);
+	getSensorRaw(ax, ay, az, gr, gp, gy, temp); //Get the raw data from the sensors
+
+	*ax = (*ax - A_OFF_X) / ACCEL_SENS * STANDARD_GRAVITY; //Remove the offset and divide by the accelerometer sensetivity (use 1000 and round() to round the value to three decimal places)
+	*ay = (*ay - A_OFF_Y) / ACCEL_SENS * STANDARD_GRAVITY;
+	*az = (*az - A_OFF_Z) / ACCEL_SENS * STANDARD_GRAVITY;
+
+	*temp = *temp / 340.0 + 36.53; //Convert to degrees C (use 1000 and round() to round the value to three decimal places)
+
+	*gr = (*gr - G_OFF_X) / GYRO_SENS * (M_PI / 180.0); // Convert to radians per second
+	*gp = (*gp - G_OFF_Y) / GYRO_SENS * (M_PI / 180.0);
+	*gy = (*gy - G_OFF_Z) / GYRO_SENS * (M_PI / 180.0);
+
 	*timestamp = chrono::time_point_cast<chrono::nanoseconds>(chrono::system_clock::now()).time_since_epoch().count(); //Get the current time
-}
-
-void MPU6050::getOffsets(float *ax_off, float *ay_off, float *az_off, float *gr_off, float *gp_off, float *gy_off) {
-	float gyro_off[3]; //Temporary storage
-	float accel_off[3];
-
-	*gr_off = 0, *gp_off = 0, *gy_off = 0; //Initialize the offsets to zero
-	*ax_off = 0, *ay_off = 0, *az_off = 0; //Initialize the offsets to zero
-
-	for (int i = 0; i < 10000; i++) { //Use loop to average offsets
-		getGyroRaw(&gyro_off[0], &gyro_off[1], &gyro_off[2]); //Raw gyroscope values
-		*gr_off = *gr_off + gyro_off[0], *gp_off = *gp_off + gyro_off[1], *gy_off = *gy_off + gyro_off[2]; //Add to sum
-
-		getAccelRaw(&accel_off[0], &accel_off[1], &accel_off[2]); //Raw accelerometer values
-		*ax_off = *ax_off + accel_off[0], *ay_off = *ay_off + accel_off[1], *az_off = *az_off + accel_off[2]; //Add to sum
-	}
-
-	*gr_off = *gr_off / 10000, *gp_off = *gp_off / 10000, *gy_off = *gy_off / 10000; //Divide by number of loops (to average)
-	*ax_off = *ax_off / 10000, *ay_off = *ay_off / 10000, *az_off = *az_off / 10000;
-
-	*ax_off = *ax_off - ACCEL_SENS; //Remove 1g from the value calculated to compensate for gravity)
 }
 
 int MPU6050::getAngle(int axis, float *result) {
@@ -164,9 +162,9 @@ void MPU6050::_update() { //Main update function - runs continuously
 	clock_gettime(CLOCK_REALTIME, &start); //Read current time into start variable
 
 	while (1) { //Loop forever
-		write(f_dev, config, 2);
-		getGyro(&gr, &gp, &gy); //Get the data from the sensors
-		getAccel(&ax, &ay, &az);
+		
+		
+		getIMU(&ax, &ay, &az, &gr, &gp, &gy, &temp, &timestamp); //Get the raw data from the sensors
 
 		//X (roll) axis
 		_accel_angle[0] = atan2(az, ay) * RAD_T_DEG - 90.0; //Calculate the angle with z and y convert to degrees and subtract 90 degrees to rotate
@@ -221,6 +219,6 @@ void MPU6050::_update() { //Main update function - runs continuously
 
 		clock_gettime(CLOCK_REALTIME, &end); //Save time to end clock
 		dt = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9; //Calculate new dt
-		clock_gettime(CLOCK_REALTIME, &start); //Save time to start clock
+		clock_gettime(CLOCK_REALTIME, &start); //Save time to start 
 	}
 }

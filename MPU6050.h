@@ -98,7 +98,8 @@ class MPU6050 {
 		float _angle[3]; //Store all angles (accel roll, accel pitch, accel yaw, gyro roll, gyro pitch, gyro yaw, comb roll, comb pitch comb yaw)
 		char config[2];
 
-		float ax, ay, az, gr, gp, gy; //Temporary storage variables used in _update()
+		float ax, ay, az, gr, gp, gy, temp; //Temporary storage variables used in _update()
+		long long timestamp; //Timestamp of the last update
 
 		int MPU6050_addr;
 		int f_dev; //Device file
@@ -106,18 +107,19 @@ class MPU6050 {
 		float dt; //Loop time (recalculated with each loop)
 
 		struct timespec start,end; //Create a time structure
-
+		
 		bool _first_run = 1; //Variable for whether to set gyro angle to acceleration angle in compFilter
 	public:
 		MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread);
 		MPU6050(int8_t addr);
 		MPU6050();
-		void getTempRaw(float *temp);
-		void getAccelRaw(float *x, float *y, float *z);
-		void getGyroRaw(float *roll, float *pitch, float *yaw);
-		void getTemp(float *temp);
-		void getAccel(float *x, float *y, float *z);
-		void getGyro(float *roll, float *pitch, float *yaw);
+		// void getTempRaw(float *temp);
+		// void getAccelRaw(float *x, float *y, float *z);
+		// void getGyroRaw(float *roll, float *pitch, float *yaw);
+		void getSensorRaw(float *x, float *y, float *z, float *roll, float *pitch, float *yaw, float *temp);
+		// void getTemp(float *temp);
+		// void getAccel(float *x, float *y, float *z);
+		// void getGyro(float *roll, float *pitch, float *yaw);
 		void getIMU(float *ax, float *ay, float *az, float *gr, float *gp, float *gy, float *temp, long long *timestamp);
 		void getOffsets(float *ax_off, float *ay_off, float *az_off, float *gr_off, float *gp_off, float *gy_off);
 		int getAngle(int axis, float *result);

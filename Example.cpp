@@ -12,7 +12,8 @@
 MPU6050 device(0x68);
 
 int main() {
-	float ax, ay, az, gr, gp, gy; // Variables to store the accel, gyro, and angle values
+	float ax, ay, az, gr, gp, gy, temp; // Variables to store the accel, gyro, and angle values
+	long long timestamp; // Timestamp of the last update
 
 	sleep(1); // Wait for the MPU6050 to stabilize
 
@@ -27,17 +28,17 @@ int main() {
 
 		auto start_interval = std::chrono::steady_clock::now();
 
-		device.getAccel(&ax, &ay, &az);
+		device.getIMU(&ax, &ay, &az, &gr, &gp, &gy, &temp, &timestamp);
 		std::cout << "Accelerometer Readings: X: " << ax << ", Y: " << ay << ", Z: " << az << "\n";
 
-		// Get the current gyroscope values
-		device.getGyro(&gr, &gp, &gy);
+		// // Get the current gyroscope values
 		std::cout << "Gyroscope Readings: X: " << gr << ", Y: " << gp << ", Z: " << gy << "\n";
 
 		// usleep(25000); // 0.025sec
-		// std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Sleep for 25 milliseconds
+		std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Sleep for 25 milliseconds
 
 		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_interval);
+		std::cout << "Elapsed time: " << elapsed.count() << " ms\n";
 		count++;
 		sum += ax;
 	}
