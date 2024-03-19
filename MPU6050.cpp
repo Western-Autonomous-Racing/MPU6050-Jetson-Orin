@@ -32,65 +32,6 @@ MPU6050::MPU6050(int8_t addr, int8_t bus_num, bool run_update_thread) {
     config[1] = 0x00; // Wake up device
 	write(f_dev, config, 2); //Take MPU6050 out of sleep mode - see Register Map
 
-	// char data[2];
-
-	// data[0] = 0x1a;
-	// data[1] = 0b00000011;
-	// write(f_dev, data, 2); // Set DLPF (low pass filter) to 44Hz (so no noise above 44Hz will pass through)
-
-	// data[0] = 0x19;
-	// data[1] = 0b00000100;
-	// write(f_dev, data, 2); // Set sample rate divider (to 200Hz) - see Register Map
-
-	// data[0] = 0x1b;
-	// data[1] = GYRO_CONFIG;
-	// write(f_dev, data, 2); // Configure gyroscope settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
-
-	// data[0] = 0x1c;
-	// data[1] = ACCEL_CONFIG;
-	// write(f_dev, data, 2); // Configure accelerometer settings - see Register Map (see MPU6050.h for the GYRO_CONFIG parameter)
-
-	// // //Set offsets to zero
-	// data[0] = 0x06;
-	// data[1] = 0b00000000;
-	// write(f_dev, data, 2);
-
-	// data[0] = 0x07;
-	// data[1] = 0b00000000;
-	// write(f_dev, data, 2);
-
-	// data[0] = 0x08;
-	// data[1] = 0b00000000;
-	// write(f_dev, data, 2);
-
-	// data[0] = 0x09;
-	// data[1] = 0b00000000;
-	// write(f_dev, data, 2);
-
-	// data[0] = 0x0A;
-	// data[1] = 0b00000000;
-	// write(f_dev, data, 2);
-
-	// data[0] = 0x0B;
-	// data[1] = 0b00000000;
-	// write(f_dev, data, 2);
-
-	// data[0] = 0x00;
-	// data[1] = 0b10000001;
-	// write(f_dev, data, 2);
-
-	// data[0] = 0x01;
-	// data[1] = 0b00000001;
-	// write(f_dev, data, 2);
-
-	// data[0] = 0x02;
-	// data[1] = 0b10000001;
-	// write(f_dev, data, 2);
-
-	// if (run_update_thread){
-	// 	thread(&MPU6050::_update, this).detach(); //Create a seperate thread, for the update routine to run in the background, and detach it, allowing the program to continue
-	// }
-
 	cout << "MPU6050 initialized" << endl; //Print message
 }
 
